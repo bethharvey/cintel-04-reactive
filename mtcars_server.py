@@ -32,7 +32,14 @@ def get_mtcars_server_functions(input, output, session):
     reactive_df = reactive.Value()
 
     @reactive.Effect
-    @reactive.event(input.MTCARS_MPG_RANGE)
+    @reactive.event(
+        input.MTCARS_MPG_RANGE,
+        input.MT_CARS_MAX_HP,
+        input.MT_CARS_GEARS_3,
+        input.MT_CARS_GEARS_4,
+        input.MT_CARS_GEARS_5
+    )
+    
     def _():
         df = original_df.copy()
 
@@ -47,11 +54,22 @@ def get_mtcars_server_functions(input, output, session):
         The column name is in quotes and is "mpg".
         You must be familiar with the dataset to know the column names.
         """
+        # Add filter df for max hp input
+        df = df[(df["mpg"] >= input_min) & (df["mpg"] <= input_max) & (df['hp'] <= input.MT_CARS_MAX_HP())]
 
-        filtered_df = df[(df["mpg"] >= input_min) & (df["mpg"] <= input_max)]
+        show_gears_list = []
+        if input.MT_CARS_GEARS_3():
+            show_gears_list.append(3)
+        if input.MT_CARS_GEARS_4():
+            show_gears_list.append(4)
+        if input.MT_CARS_GEARS_5():
+            show_gears_list.append(4)
+        show_gears_list = show_gears_list or [3, 4, 5]
+        gears_filter = df["gear"].isin(show_gears_list)
+        df = df[gears_filter]
 
         # Set the reactive value
-        reactive_df.set(filtered_df)
+        reactive_df.set(df)
 
     @output
     @render.text
@@ -82,6 +100,8 @@ def get_mtcars_server_functions(input, output, session):
         df = reactive_df.get()
         matplotlib_fig, ax = plt.subplots()
         plt.title("MT Cars with matplotlib")
+        plt.xlabel('Weight (1,000 lb)')
+        plt.ylabel('Miles per Gallon')
         ax.scatter(df["wt"], df["mpg"])
         return matplotlib_fig
 
@@ -96,6 +116,14 @@ def get_mtcars_server_functions(input, output, session):
         )
 
         return plotnine_plot
+    
+    @output
+    @render_widget
+    def mtcars_plot3():
+        df = reactive_df.get()
+        plotly_express_plot2 = px.scatter(df, x="mpg", y="hp", symbol = 'gear', size="wt")
+        plotly_express_plot2.update_layout(title="MT Cars with Plotly Express")
+        return plotly_express_plot2
 
     # return a list of function names for use in reactive outputs
     return [
@@ -104,4 +132,5 @@ def get_mtcars_server_functions(input, output, session):
         mtcars_output_widget1,
         mtcars_plot1,
         mtcars_plot2,
+        mtcars_plot3,
     ]
