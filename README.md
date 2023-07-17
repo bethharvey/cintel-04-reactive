@@ -7,7 +7,7 @@
 * Module 4
 * July 17, 2023
 
-* The goal of this project is to practice adding reactivity to interactive apps using various inputs and connected outputs.
+* The goal of this project is to practice adding reactivity to interactive apps using various inputs and connected outputs. For this project I focused on the MT_Cars tab in the app.
 
 -----
 
